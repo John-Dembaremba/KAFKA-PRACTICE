@@ -6,20 +6,20 @@ import (
 )
 
 type FakeData interface {
-	getPersonData() *schema.Person
-	getCompanyData() *schema.Company
+	GetPersonData() *schema.Person
+	GetCompanyData() *schema.Company
 }
 
 type Handler struct {
-	fake *fakerInstance.Faker
+	fake fakerInstance.Faker
 }
 
 func New() *Handler {
 	fake := fakerInstance.New()
-	return &Handler{fake: &fake}
+	return &Handler{fake: fake}
 }
 
-func (f *Handler) getPersonData() *schema.Person {
+func (f *Handler) GetPersonData() *schema.Person {
 	return &schema.Person{
 		ID:      f.fake.Int(),
 		Name:    f.fake.Person().FirstName(),
@@ -28,7 +28,7 @@ func (f *Handler) getPersonData() *schema.Person {
 	}
 }
 
-func (f *Handler) getCompanyData() *schema.Company {
+func (f *Handler) GetCompanyData() *schema.Company {
 	return &schema.Company{
 		ID:   f.fake.Int(),
 		Name: f.fake.Company().Name(),

@@ -1,0 +1,86 @@
+version: "3.7"
+
+services:
+  kafka:
+    image: apache/kafka:3.7.0
+    restart: unless-stopped
+    container_name: kafka
+    hostname: kafka
+    env_file:
+      - .env
+    ports:
+      - "9092:${KAFKA_PORT}"
+    environment:
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:${KAFKA_PORT}"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_LISTENERS: "INTERNAL://kafka:29092,CONTROLLER://kafka:29093,EXTERNAL://0.0.0.0:${KAFKA_PORT}"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+      # Replace CLUSTER_ID with a unique base64 UUID using "python3 manage.py cluster_id.py"
+      # See https://docs.confluent.io/kafka/operations-tools/kafka-tools.html#kafka-storage-sh
+      CLUSTER_ID: "4MTU1PrZTESgVmNQvwvz2Q=="
+    volumes:
+      - kafka_data:/var/lib/kafka:z
+    networks:
+      - kafka_network
+
+  # cp-kafka:
+  #   image: confluentinc/cp-kafka:7.6.0
+  #   restart: on-failure:3
+  #   container_name: cp-kafka
+  #   hostname: cp-kafka
+  #   ports:
+  #     - 9093:9093
+  #   environment:
+  #     KAFKA_NODE_ID: 1
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+  #     KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://cp-kafka:29092,PLAINTEXT_HOST://localhost:9093"
+  #     KAFKA_JMX_PORT: 9093
+  #     KAFKA_JMX_HOSTNAME: "localhost"
+  #     KAFKA_PROCESS_ROLES: "broker,controller"
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #     KAFKA_CONTROLLER_QUORUM_VOTERS: "1@cp-kafka:29093"
+  #     KAFKA_LISTENERS: "PLAINTEXT://cp-kafka:29092,CONTROLLER://cp-kafka:29093,PLAINTEXT_HOST://0.0.0.0:9093"
+  #     KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+  #     KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+  #     CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+  #   volumes:
+  #     - cp_kafka_data:/var/lib/kafka:z
+  #   networks:
+  #     - kafka_network
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: "provectuslabs/kafka-ui:latest"
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_CLUSTERS_0_NAME=4MTU1PrZTESgVmNQvwvz2Q==
+    networks:
+      - kafka_network
+
+  # cp-kafka-ui:
+  #   container_name: cp-kafka-ui
+  #   image: "provectuslabs/kafka-ui:latest"
+  #   ports:
+  #     - "8082:8082"
+  #   environment:
+  #     - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=cp-kafka:29092
+  #     - KAFKA_CLUSTERS_0_NAME=MkU3OEVBNTcwNTJENDM2Qk
+  #   networks:
+  #     - kafka_network
+volumes:
+  kafka_data:
+  # cp_kafka_data:
+networks:
+  kafka_network:
+    driver: bridge
